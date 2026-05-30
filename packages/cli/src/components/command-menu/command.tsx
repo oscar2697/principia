@@ -48,7 +48,7 @@ export const COMMANDS: CommandType[] = [
     },
     {
         name: 'exit',
-        description: 'Quit de application',
+        description: 'Quit the application',
         value: '/exit',
         action: (ctx) => {
             ctx.exit()

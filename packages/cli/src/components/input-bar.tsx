@@ -35,14 +35,9 @@ export function InputBar({ onSubmit, disabled = false }: Props) {
 
     } = useCommandMenu()
 
-    const handleCommandExecute = useCallback((index: number) => {
-        const command = resolveCommand(index)
-        handleCommand(command)
-    }, [])
-
     const handleTextareaContentChange = useCallback(() => {
         const textarea = textareaRef.current
-        if(!textarea) return
+        if (!textarea) return
 
         handleContentChange(textarea.plainText)
     }, [])
@@ -76,6 +71,11 @@ export function InputBar({ onSubmit, disabled = false }: Props) {
             textarea.insertText(command.value + ' ')
         }
     }, [render])
+
+    const handleCommandExecute = useCallback((index: number) => {
+        const command = resolveCommand(index)
+        handleCommand(command)
+    }, [resolveCommand, handleCommand])
 
     useEffect(() => {
         const textarea = textareaRef.current
