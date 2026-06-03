@@ -42,6 +42,7 @@ type ThemeContextValue = {
     colors: ThemeColors
     currentTheme: Theme
     setTheme: (theme: Theme) => void
+    setPreviewTheme: (theme: Theme) => void
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
@@ -68,9 +69,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         persistTheme(theme)
     }, [])
 
+    const setPreviewTheme = useCallback((theme: Theme) => {
+        setCurrentTheme(theme)
+    }, [])
+
     return (
         <ThemeContext.Provider
-            value={{ colors: currentTheme.colors, currentTheme, setTheme }}
+            value={{ colors: currentTheme.colors, currentTheme, setTheme, setPreviewTheme }}
         >
             {children}
         </ThemeContext.Provider>

@@ -80,7 +80,7 @@ export function InputBar({ onSubmit, disabled = false }: Props) {
         } else {
             textarea.insertText(command.value + ' ')
         }
-    }, [render, toast])
+    }, [render, toast, dialog])
 
     const handleCommandExecute = useCallback((index: number) => {
         const command = resolveCommand(index)

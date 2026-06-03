@@ -6,7 +6,7 @@ import { DialogSearchList } from "../dialog-search-list"
 
 export const ThemeDialogContent = () => {
     const dialog = useDialog()
-    const { setTheme, currentTheme } = useTheme()
+    const { setTheme, setPreviewTheme, currentTheme } = useTheme()
     const originalThemeRef = useRef(currentTheme)
     const confirmedRef = useRef(false)
 
@@ -25,8 +25,8 @@ export const ThemeDialogContent = () => {
     }, [setTheme, dialog])
 
     const handleHeight = useCallback((theme: Theme) => {
-        setTheme(theme)
-    }, [setTheme])
+        setPreviewTheme(theme)
+    }, [setPreviewTheme])
 
     return (
         <DialogSearchList
