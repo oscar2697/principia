@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator"
 import { Hono } from "hono"
 //import { HTTPException } from "hono/http-exception"
 import { MessageStatus, Mode, Role } from "@principia/database/enums"
-import { db } from '@principia/database'
+import { db } from '@principia/database/client'
 
 const createSessionsSchema = z.object({
     title: z.string(),

@@ -7,7 +7,7 @@ export const messagePartSchema = z.discriminatedUnion('type', [
         text: z.string
     }),
     z.object({
-        type: z.string('too-call'),
+        type: z.literal('tool-call'),
         id: z.string(),
         name: z.string(),
         args: toolCallArgsSchema,

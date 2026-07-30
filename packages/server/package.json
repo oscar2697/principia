@@ -6,7 +6,7 @@
         ".": "./src/index.ts"
     },
     "scripts": {
-        "dev": "bun run --hot src/index.ts"
+        "dev": "bun run @principia/database:bootstrap && bun run --hot src/index.ts"
     },
     "dependencies": {
         "@hono/zod-validator": "^0.8.0",
