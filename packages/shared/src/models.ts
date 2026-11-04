@@ -3,7 +3,7 @@ export type ModelPricing = {
     outputUsdPerMillionTokens: number
 }
 
-export type SupportedProvider = 'anthropic' | 'openai'
+export type SupportedProvider = 'anthropic' | 'openai' | 'nvidia'
 
 type SupportedChatModelDefinition = {
     id: string
@@ -60,6 +60,22 @@ export const SUPPORTED_CHAT_MODELS = [
             outputUsdPerMillionTokens: 1.25
         }
     },
+    {
+        id: 'nvidia/nemotron-3.5-bolt-e4b',
+        provider: 'nvidia',
+        pricing: {
+            inputUsdPerMillionTokens: 0,
+            outputUsdPerMillionTokens: 0
+        }
+    },
+    {
+        id: 'mistralai/mistral-large-4-1t-a52b',
+        provider: 'nvidia',
+        pricing: {
+            inputUsdPerMillionTokens: 0,
+            outputUsdPerMillionTokens: 0
+        }
+    },
 ] as const satisfies readonly SupportedChatModelDefinition[]
 
 export type SupportedChatModel = (typeof SUPPORTED_CHAT_MODELS)[number]
@@ -69,4 +85,4 @@ export function findSupportedChatModel(modelId: string) {
     return SUPPORTED_CHAT_MODELS.find((model) => model.id === modelId)
 }
 
-export const DEFAULT_CHAT_MODEL_ID: SupportedChatModelId = 'claude-opus-4-6'
+export const DEFAULT_CHAT_MODEL_ID: SupportedChatModelId = 'nvidia/nemotron-3.5-bolt-e4b'
