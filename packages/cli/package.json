@@ -15,11 +15,14 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@principia/database": "workspace:*",
     "@opentui/core": "^0.2.16",
     "@opentui/react": "^0.2.16",
     "@principia/shared": "workspace:*",
+    "eventsource-parser": "^4.1.3",
     "hono": "^4.12.31",
     "opentui-spinner": "^0.0.6",
+    "pretty-ms": "^10.0.0",
     "react": "^19.2.6",
     "react-router": "^7.17.0",
     "zod": "^4.4.3"
