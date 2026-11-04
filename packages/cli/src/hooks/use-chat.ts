@@ -119,7 +119,7 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
                 interrupted: true
             }
         ])
-    }, [])
+    }, [updateMessages])
 
     const clearStream = useCallback((requestId: string) => {
         if (!isActiveRequest(requestId)) return
@@ -180,6 +180,7 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
 
                     if (last && last.type === 'text') {
                         last.text += event.text
+                        emitParts(activeStream.requestId, parts)
                     } else {
                         parts.push({
                             type: 'text',

@@ -20,7 +20,7 @@ const submitValidator = zValidator('json', submitSchema, (result, c) => {
     }
 })
 
-const activeResumeSessionIds = new Set<string>()
+const activeSessionOperations = new Map<string, AbortController>()
 
 // Strip error messages and empty 
 function buildConversationHistory(
@@ -207,14 +207,17 @@ const app = new Hono()
             return c.json({ error: `Session uses unsupported model: ${resumableMessage.model}` }, 409)
         }
 
-        if (activeResumeSessionIds.has(sessionId)) {
-            return c.json({ error: 'Session is already being resumed' }, 409)
+        const existingAbortController = activeSessionOperations.get(sessionId)
+        if (existingAbortController) {
+            if (!existingAbortController.signal.aborted) {
+                existingAbortController.abort()
+            }
         }
 
-        activeResumeSessionIds.add(sessionId)
+        const abortController = new AbortController()
+        activeSessionOperations.set(sessionId, abortController)
 
         const history = buildConversationHistory(session.messages)
-        const abortController = new AbortController()
         try {
             return streamSSE(c, async (stream) => {
                 stream.onAbort(() => {
@@ -230,11 +233,11 @@ const app = new Hono()
                         abortController
                     })
                 } finally {
-                    activeResumeSessionIds.delete(sessionId)
+                    activeSessionOperations.delete(sessionId)
                 }
             },
                 async (error, stream) => {
-                    activeResumeSessionIds.delete(sessionId)
+                    activeSessionOperations.delete(sessionId)
 
                     const message = error instanceof Error ? error.message : String(error)
                     const errorEvent: ChatStreamEvent = { type: 'error', message }
@@ -245,7 +248,7 @@ const app = new Hono()
                 }
             )
         } catch (error) {
-            activeResumeSessionIds.delete(sessionId)
+            activeSessionOperations.delete(sessionId)
             throw error
         }
     })
@@ -267,6 +270,13 @@ const app = new Hono()
 
         const data = c.req.valid('json')
 
+        const existingAbortController = activeSessionOperations.get(sessionId)
+        if (existingAbortController) {
+            if (!existingAbortController.signal.aborted) {
+                existingAbortController.abort()
+            }
+        }
+
         await db.message.create({
             data: {
                 sessionId,
@@ -279,6 +289,7 @@ const app = new Hono()
         })
 
         const history = buildConversationHistory([
+            ...session.messages,
             {
                 role: 'USER',
                 content: data.content,
@@ -287,22 +298,28 @@ const app = new Hono()
         ])
 
         const abortController = new AbortController()
+        activeSessionOperations.set(sessionId, abortController)
 
         return streamSSE(c, async (stream) => {
             stream.onAbort(() => {
                 abortController.abort()
             })
 
-            await streamAIResponse(stream, {
-                sessionId,
-                model: data.model,
-                history,
-                mode: data.mode,
-                abortController
-            })
+            try {
+                await streamAIResponse(stream, {
+                    sessionId,
+                    model: data.model,
+                    history,
+                    mode: data.mode,
+                    abortController
+                })
+            } finally {
+                activeSessionOperations.delete(sessionId)
+            }
         },
 
             async (error, stream) => {
+                activeSessionOperations.delete(sessionId)
                 const message = error instanceof Error ? error.message : String(error)
                 const errorEvent: ChatStreamEvent = { type: 'error', message }
                 await stream.writeSSE({
