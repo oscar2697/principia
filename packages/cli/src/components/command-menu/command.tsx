@@ -1,4 +1,5 @@
-import { ThemeDialogContent } from "../dialogs/theme-dialog"
+import { SUPPORTED_CHAT_MODELS } from "@principia/shared"
+import { ThemeDialogContent, SesssionsDialogContent, AgentsDialogContent, ModelsDialogContent } from "../dialogs"
 import type { CommandType } from "./types"
 
 export const COMMANDS: CommandType[] = [
@@ -7,7 +8,7 @@ export const COMMANDS: CommandType[] = [
         description: 'Start a new conversation',
         value: '/new',
         action: (ctx) => {
-            ctx.toast.show({ message: 'Starting new conversation...' })
+            ctx.navigate('/')
         }
     },
     {
@@ -16,8 +17,11 @@ export const COMMANDS: CommandType[] = [
         value: '/agents',
         action: (ctx) => {
             ctx.dialog.open({
-                title: 'Select Agent',
-                children: <text>Select an agent to switch to...</text>
+                title: 'Select Agents',
+                children: <AgentsDialogContent
+                    currentMode={ctx.mode}
+                    onSelectMode={ctx.setMode}
+                />
             })
         }
     },
@@ -27,8 +31,11 @@ export const COMMANDS: CommandType[] = [
         value: '/models',
         action: (ctx) => {
             ctx.dialog.open({
-                title: 'Select Model',
-                children: <text>Select a model to switch to...</text>
+                title: 'Select Models',
+                children: <ModelsDialogContent
+                    models={SUPPORTED_CHAT_MODELS.map((model) => model.id)}
+                    onSelectModel={ctx.setModel}
+                />
             })
         }
     },
@@ -37,7 +44,10 @@ export const COMMANDS: CommandType[] = [
         description: 'View your sessions',
         value: '/sessions',
         action: (ctx) => {
-            ctx.toast.show({ message: 'Loading sessions...' })
+            ctx.dialog.open({
+                title: 'Sessions',
+                children: <SesssionsDialogContent />
+            })
         }
     },
     {
