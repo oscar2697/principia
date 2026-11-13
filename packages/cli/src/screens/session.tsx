@@ -13,6 +13,7 @@ import prettyMilliseconds from "pretty-ms"
 import { MessageStatus } from '@principia/database/enums'
 import { useKeyboardLayer } from "../providers/keyboard-layer"
 import { useKeyboard } from "@opentui/react"
+import { usePromptConfig } from "../providers/prompt-config"
 
 type Session = InferResponseType<(typeof apiClient.sessions)[':id']['$get'], 200>
 
@@ -80,6 +81,7 @@ function ChatMessage({ msg }: { msg: Message }) {
 function SessionChat({ session }: { session: SessionData }) {
     const [initialMessages] = useState(() => mapDbMessages(session.messages))
     const { isTopLayer } = useKeyboardLayer()
+    const { mode, model } = usePromptConfig()
     const { messages, streaming, submit, abort, interrupt } = useChat(session.id, initialMessages)
 
     useEffect(() => {
@@ -97,8 +99,8 @@ function SessionChat({ session }: { session: SessionData }) {
         <SessionShell
             onSubmit={(text) => submit({
                 userText: text,
-                mode: 'BUILD',
-                model: DEFAULT_CHAT_MODEL_ID
+                mode,
+                model
             })}
             loading={streaming.status === 'streaming'}
             interruptible={streaming.status === 'streaming'}
