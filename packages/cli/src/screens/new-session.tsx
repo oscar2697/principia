@@ -5,11 +5,13 @@ import { SessionShell } from "../components/session-shell"
 import z from "zod"
 import { useToast } from "../providers/toast"
 import { apiClient } from "../lib/api-client"
-import { DEFAULT_CHAT_MODEL_ID } from "@principia/shared"
+import { Mode } from '@principia/database/enums'
 import { getErrorsMessage } from "../lib/http-errors"
 
 const newSessionMessage = z.object({
-    message: z.string()
+    message: z.string(),
+    mode: z.enum(Mode),
+    model: z.string()
 })
 
 export function NewSession() {
@@ -45,8 +47,8 @@ export function NewSession() {
                         initialMessage: {
                             role: 'USER',
                             content: state.message,
-                            mode: 'BUILD',
-                            model: DEFAULT_CHAT_MODEL_ID
+                            mode: state.mode,
+                            model: state.model
                         }
                     }
                 })
@@ -87,7 +89,10 @@ export function NewSession() {
             inputDisabled
             loading
         >
-            <UserMessage message={state.message} />
+            <UserMessage
+                message={state.message}
+                mode={state.mode}
+            />
         </SessionShell>
     )
 }
