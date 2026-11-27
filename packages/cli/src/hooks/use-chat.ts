@@ -9,8 +9,20 @@ import prettyMilliseconds from "pretty-ms"
 import { apiClient } from "../lib/api-client"
 import { UserMessage } from '../components/messages/user-message';
 
-export type ClientMessagePart = {
-    type: 'text',
+export type ClientToolCallPart = {
+    type: 'tool-call'
+    id: string
+    name: string
+    args: Record<string, unknown>
+    result?: string
+    status: 'calling' | 'done'
+}
+
+export type ClientMessagePart = | {
+    type: 'reasoning'
+    text: string
+} | ClientToolCallPart | {
+    type: 'text'
     text: string
 }
 
@@ -175,7 +187,48 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
             }
 
             switch (event.type) {
-                case 'text-delta':
+                case 'reasoning-delta': {
+                    const last = parts[parts.length - 1]
+
+                    if (last && last.type === 'reasoning') {
+                        last.text += event.text
+                    } else {
+                        parts.push({
+                            type: 'reasoning',
+                            text: event.text
+                        })
+                    }
+
+                    emitParts(activeStream.requestId, parts)
+                    break
+                }
+
+                case 'tool-call': {
+                    parts.push({
+                        type: 'tool-call',
+                        id: event.toolCallId,
+                        name: event.toolName,
+                        args: event.args,
+                        status: 'calling'
+                    })
+
+                    emitParts(activeStream.requestId, parts)
+                    break
+                }
+
+                case 'tool-result': {
+                    const tc = parts.find((p): p is ClientToolCallPart => p.type === 'tool-call' && p.id === event.toolCallId)
+
+                    if(tc) {
+                        tc.result = event.result
+                        tc.status = 'done'
+                    }
+
+                    emitParts(activeStream.requestId, parts)
+                    break
+                }
+
+                case 'text-delta': {
                     const last = parts[parts.length - 1]
 
                     if (last && last.type === 'text') {
@@ -190,8 +243,9 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
                         emitParts(activeStream.requestId, parts)
                     }
                     break
+                }
 
-                case 'done':
+                case 'done': {
                     if (!isActiveRequest(activeStream.requestId)) return
                     const fullText = parts
                         .filter((p) => p.type == 'text')
@@ -211,8 +265,9 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
                         }
                     ])
                     break
+                }
 
-                case 'error':
+                case 'error': {
                     updateMessages((prev) => [
                         ...prev,
                         {
@@ -222,6 +277,7 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
                         }
                     ])
                     break
+                }
             }
         }
     }, [isActiveRequest, emitParts, updateMessages, clearStream])
@@ -282,7 +338,7 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
         }
 
         activeStreamRef.current = null
-        setStreaming({status: 'idle'})
+        setStreaming({ status: 'idle' })
         activeStream.controller.abort()
     }, [capturedInterruptedMessage])
 
@@ -346,7 +402,7 @@ export function useChat(sessionId: string, initialMessage: Message[]) {
     const abort = useCallback(() => {
         stopActiveStream(false)
     }, [stopActiveStream])
-    
+
     const interrupt = useCallback(() => {
         stopActiveStream(true)
     }, [stopActiveStream])

@@ -3,6 +3,7 @@ import { openai } from "@ai-sdk/openai"
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
 import { findSupportedChatModel, type SupportedChatModel, type SupportedChatModelId, type SupportedProvider } from "@principia/shared"
 import type { LanguageModel } from "ai"
+import type { ProviderOptions } from '@ai-sdk/provider-utils'
 
 type AnthropicModelId = Extract<SupportedChatModel, { provider: "anthropic" }>["id"]
 type OpenAIModelId = Extract<SupportedChatModel, { provider: "openai" }>["id"]
@@ -12,6 +13,26 @@ export type ResolvedModel = {
     model: LanguageModel
     provider: SupportedProvider
     modelId: SupportedChatModelId
+    providerOptions?: ProviderOptions
+}
+
+const NVIDIA_PROVIDER_OPTIONS: Partial<Record<NvidiaModelId, ProviderOptions>> = {
+    "nvidia/nemotron-3.5-bolt-e4b": {
+        nvidia: {
+            thinking: {
+                type: 'enabled',
+                budgetTokens: 10000,
+            }
+        }
+    },
+    "mistralai/mistral-large-4-1t-a52b": {
+        nvidia: {
+            thinking: {
+                type: 'enabled',
+                budgetTokens: 10000,
+            }
+        }
+    },
 }
 
 const nvidia = createOpenAICompatible({
@@ -45,7 +66,8 @@ function resolveNvidiaModel(modelId: NvidiaModelId): ResolvedModel {
     return {
         model: nvidia(modelId),
         provider: 'nvidia',
-        modelId
+        modelId,
+        providerOptions: NVIDIA_PROVIDER_OPTIONS[modelId]
     }
 }
 

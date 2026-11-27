@@ -1,10 +1,13 @@
 import { useTheme } from "../../providers/theme"
+import { Mode } from '@principia/database/enums'
+import { EmptyBorder } from "../border"
 
 type Props = {
     message: string
+    mode: Mode
 }
 
-export function UserMessage({ message }: Props) {
+export function UserMessage({ message, mode }: Props) {
     const { colors } = useTheme()
 
     return (
@@ -14,8 +17,13 @@ export function UserMessage({ message }: Props) {
         >
             <box
                 border={['left']}
-                borderColor={colors.primary}
+                borderColor={mode === Mode.PLAN ? colors.planMode : colors.primary}
                 width='100%'
+                customBorderChars={{
+                    ...EmptyBorder,
+                    vertical: "┃",
+                    bottomLeft: "╹",
+                }}
             >
                 <box
                     justifyContent="center"

@@ -2,13 +2,13 @@ import type { InferResponseType } from "hono"
 import { SessionShell } from "../components/session-shell"
 import { apiClient } from "../lib/api-client"
 import z from "zod"
-import { BotMessage, UserMessage } from "../components/messages"
+import { BotMessage, ErrorMessage, UserMessage } from "../components/messages"
 import { useLocation, useNavigate, useParams, type SessionData } from "react-router"
 import { useToast } from "../providers/toast"
 import { useEffect, useMemo, useState } from "react"
 import { getErrorsMessage } from "../lib/http-errors"
-import { DEFAULT_CHAT_MODEL_ID, type SupportedChatModelId } from "@principia/shared"
-import { useChat, type Message } from "../hooks/use-chat"
+import { messagePartSchema, type SupportedChatModelId } from "@principia/shared"
+import { useChat, type ClientMessagePart, type Message } from "../hooks/use-chat"
 import prettyMilliseconds from "pretty-ms"
 import { MessageStatus } from '@principia/database/enums'
 import { useKeyboardLayer } from "../providers/keyboard-layer"
@@ -41,16 +41,23 @@ function mapDbMessages(dbMessages: SessionData['messages']): Message[] {
             }
         }
 
+        const parsedParts = m.parts == null
+            ? null
+            : z.array(messagePartSchema).safeParse(m.parts)
+
+        const parts: ClientMessagePart[] = parsedParts?.success
+            ? parsedParts.data.map((p) =>
+                p.type === 'tool-call' ? { ...p, status: 'done' as const } : p
+            )
+            : []
+
         return {
             id: m.id,
             role: 'assistant',
             content: m.content,
             model: m.model as SupportedChatModelId,
             mode: m.mode,
-            parts: [{
-                type: 'text',
-                text: m.content
-            }],
+            parts,
             ...(m.duration != null ? { duration: prettyMilliseconds(m.duration * 1000) } : {}),
             interrupted: m.status === MessageStatus.INTERRUPTED
         }
@@ -59,11 +66,14 @@ function mapDbMessages(dbMessages: SessionData['messages']): Message[] {
 
 function ChatMessage({ msg }: { msg: Message }) {
     if (msg.role === 'user') {
-        return <UserMessage message={msg.content} />
+        return <UserMessage
+            message={msg.content}
+            mode={msg.mode}
+        />
     }
 
     if (msg.role === 'error') {
-        return <UserMessage message={msg.content} />
+        return <ErrorMessage message={msg.content} />
     }
 
     return (
